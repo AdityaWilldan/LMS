@@ -9,61 +9,46 @@
     <p>Daftar tugas dari semua mata kuliah</p>
 </div>
 
-<div class="card">
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width:60px;">#</th>
-                    <th>Judul Tugas</th>
-                    <th>Deadline</th>
-                    <th>Kelas</th>
-                    <th style="width:120px;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($tugas as $t)
-                <tr>
-                    <td><span class="badge">{{ $loop->iteration }}</span></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="file-text" style="width:14px;height:14px;color:var(--foreground-tertiary);"></i>
-                            <span class="font-medium">{{ $t->judul_tugas }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge">
-                            <i data-lucide="clock"></i>
-                            {{ $t->deadline->format('d/m/Y H:i') }}
-                        </span>
-                    </td>
-                    <td>
-                        <span style="display:inline-flex;align-items:center;gap:4px;">
-                            <i data-lucide="book-open" style="width:12px;height:12px;color:var(--foreground-tertiary);"></i>
-                            {{ $t->kelas->nama_kelas ?? '—' }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{{ route('mahasiswa.tugas.show', $t->id_tugas) }}" class="btn btn-sm btn-primary">
-                            <i data-lucide="eye"></i> Detail
-                        </a>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">
-                                <i data-lucide="inbox"></i>
-                            </div>
-                            <h3>Belum ada tugas</h3>
-                            <p>Tidak ada tugas yang tersedia</p>
-                        </div>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+<div class="grid grid-3">
+    @forelse($kelas as $k)
+    <div class="class-card" style="--card-accent: var(--gradient-info);">
+        <div class="class-card-header">
+            <div class="class-card-icon" style="background: var(--gradient-info);">
+                <i data-lucide="book"></i>
+            </div>
+            <div>
+                <div class="class-card-title">{{ $k->mataKuliah->nama_matkul }}</div>
+                <div class="class-card-subtitle">{{ $k->mataKuliah->kode_matkul }} • {{ $k->mataKuliah->sks }} SKS</div>
+            </div>
+        </div>
+        <div class="class-card-body">
+            <div style="margin-bottom:12px;">
+                {{-- <div class="d-flex align-items-center gap-2" style="margin-bottom:8px;">
+                    <i data-lucide="users" style="width:14px;height:14px;color:var(--foreground-tertiary);"></i>
+                    <span style="font-size:13px;color:var(--foreground-secondary);">{{ $k->nama_kelas }}</span>
+                </div> --}}
+                {{-- <div class="d-flex align-items-center gap-2">
+                    <i data-lucide="calendar" style="width:14px;height:14px;color:var(--foreground-tertiary);"></i>
+                    <span style="font-size:13px;color:var(--foreground-secondary);">Semester {{ $k->semester }}</span>
+                </div> --}}
+                <div class="d-flex align-items-center gap-2" style="margin-top:8px;">
+                    <i data-lucide="clipboard-list" style="width:14px;height:14px;color:var(--foreground-tertiary);"></i>
+                    <span style="font-size:13px;color:var(--foreground-secondary);">{{ $k->tugas_count }} Tugas</span>
+                </div>
+            </div>
+            <a href="{{ route('mahasiswa.tugas.bykelas', $k->id_kelas) }}" class="btn btn-primary" style="width:100%;">
+                <i data-lucide="arrow-right"></i> Detail
+            </a>
+        </div>
     </div>
+    @empty
+    <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-state-icon">
+            <i data-lucide="inbox"></i>
+        </div>
+        <h3>Belum ada mata kuliah</h3>
+        <p>Anda belum mengambil mata kuliah semester ini</p>
+    </div>
+    @endforelse
 </div>
 @endsection

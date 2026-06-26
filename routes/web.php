@@ -13,7 +13,17 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-// Group Dosen
+// ===== API untuk Mahasiswa (Notifikasi Tugas) =====
+Route::prefix('api')->middleware('auth:mahasiswa')->group(function () {
+    Route::get('/tugas-belum-dikerjakan', [App\Http\Controllers\Mahasiswa\ApiMahasiswaController::class, 'tugasBelumDikerjakan']);
+});
+
+// ===== Download file materi =====
+Route::get('/download/tugas/{id}', [App\Http\Controllers\DownloadController::class, 'tugas'])
+    ->name('download.tugas')
+    ->middleware('auth:dosen,mahasiswa');
+
+// ===== Group Dosen =====
 Route::prefix('dosen')->name('dosen.')->middleware('auth:dosen')->group(function () {
     Route::get('/dashboard', function () {
         return view('dosen.dashboard');
@@ -28,12 +38,30 @@ Route::prefix('dosen')->name('dosen.')->middleware('auth:dosen')->group(function
     Route::get('mahasiswa', [App\Http\Controllers\Dosen\MahasiswaDosenController::class, 'index'])->name('mahasiswa.index');
     Route::get('mahasiswa/{id_kelas}', [App\Http\Controllers\Dosen\MahasiswaDosenController::class, 'show'])->name('mahasiswa.show');
 
-    Route::get('absensi', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'index'])->name('absensi.index');
-    Route::get('absensi/{id_kelas}/create', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'create'])->name('absensi.create');
-    Route::post('absensi/{id_kelas}/store', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'store'])->name('absensi.store');
+    // ===== ROUTE ABSENSI DOSEN =====
+    Route::prefix('absensi')->name('absensi.')->group(function () {
+        // Indeks absensi
+        Route::get('/', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'index'])->name('index');
+
+        // ===== MANAJEMEN SESI (diletakkan di ATAS route dengan parameter) =====
+        Route::get('sesi', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiIndex'])->name('sesi.index');
+        Route::get('sesi/create', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiCreate'])->name('sesi.create');
+        Route::post('sesi', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiStore'])->name('sesi.store');
+        Route::patch('sesi/{id_sesi}/toggle', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiToggle'])->name('sesi.toggle');
+
+        // ===== REKAP ABSENSI =====
+        Route::get('{id_kelas}/rekap/{tanggal?}', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'rekap'])->name('rekap');
+
+        // ===== TOGGLE MODE ABSENSI (baru) =====
+        Route::get('mode/toggle', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'toggleMode'])->name('mode.toggle');
+
+        // ===== ABSENSI MANUAL OLEH DOSEN =====
+        Route::get('{id_kelas}/create', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'create'])->name('create');
+        Route::post('{id_kelas}/store', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'store'])->name('store');
+    });
 });
 
-// Group Mahasiswa
+// ===== Group Mahasiswa =====
 Route::prefix('mahasiswa')->name('mahasiswa.')->middleware('auth:mahasiswa')->group(function () {
     Route::get('/dashboard', function () {
         return view('mahasiswa.dashboard');
@@ -48,7 +76,9 @@ Route::prefix('mahasiswa')->name('mahasiswa.')->middleware('auth:mahasiswa')->gr
     Route::get('matakuliah', [App\Http\Controllers\Mahasiswa\MataKuliahMahasiswaController::class, 'index'])->name('matakuliah.index');
     Route::get('matakuliah/{id_kelas}', [App\Http\Controllers\Mahasiswa\MataKuliahMahasiswaController::class, 'show'])->name('matakuliah.show');
 
+    // ===== ROUTE TUGAS =====
     Route::get('tugas', [App\Http\Controllers\Mahasiswa\TugasMahasiswaController::class, 'index'])->name('tugas.index');
+    Route::get('tugas/kelas/{id_kelas}', [App\Http\Controllers\Mahasiswa\TugasMahasiswaController::class, 'tugasByKelas'])->name('tugas.bykelas');
     Route::get('tugas/{id_tugas}', [App\Http\Controllers\Mahasiswa\TugasMahasiswaController::class, 'show'])->name('tugas.show');
     Route::post('tugas/{id_tugas}/upload', [App\Http\Controllers\Mahasiswa\TugasMahasiswaController::class, 'upload'])->name('tugas.upload');
     Route::delete('tugas/{id_tugas}/delete-upload', [App\Http\Controllers\Mahasiswa\TugasMahasiswaController::class, 'deleteUpload'])->name('tugas.delete-upload');
@@ -58,13 +88,7 @@ Route::prefix('mahasiswa')->name('mahasiswa.')->middleware('auth:mahasiswa')->gr
 
     Route::get('jadwal', [App\Http\Controllers\Mahasiswa\JadwalMahasiswaController::class, 'index'])->name('jadwal.index');
 
+    // ===== ROUTE ABSENSI MAHASISWA =====
     Route::get('absensi', [App\Http\Controllers\Mahasiswa\AbsensiMahasiswaController::class, 'index'])->name('absensi.index');
-
-    Route::get('notifikasi', [App\Http\Controllers\Mahasiswa\NotifikasiMahasiswaController::class, 'index'])->name('notifikasi.index');
+    Route::post('absensi/absen/{id_kelas}', [App\Http\Controllers\Mahasiswa\AbsensiMahasiswaController::class, 'absen'])->name('absensi.absen');
 });
-
-// ===== PERBAIKAN DI SINI =====
-// Tambahkan guard yang diizinkan agar user dosen atau mahasiswa bisa akses
-Route::get('/download/tugas/{id}', [App\Http\Controllers\DownloadController::class, 'tugas'])
-    ->name('download.tugas')
-    ->middleware('auth:dosen,mahasiswa'); // <-- Perbaikan

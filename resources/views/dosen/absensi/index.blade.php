@@ -17,13 +17,29 @@
                 <i data-lucide="book-open"></i>
             </div>
             <div>
-                <div class="class-card-title">{{ $k->nama_kelas }}</div>
+                <div class="class-card-title">KELAS: {{ $k->nama_kelas }}</div>
                 <div class="class-card-subtitle">{{ $k->mataKuliah->nama_matkul ?? '—' }}</div>
             </div>
         </div>
         <div class="class-card-body">
-            <a href="{{ route('dosen.absensi.create', $k->id_kelas) }}" class="btn btn-primary" style="width:100%;">
+            <a href="{{ route('dosen.absensi.sesi.index', $k->id_kelas) }}" class="btn btn-primary" style="width:100%;">
                 <i data-lucide="calendar-check"></i> Isi Absensi
+            </a>
+        </div>
+    </div>
+        <div class="class-card" style="--card-accent: var(--gradient-info);">
+        <div class="class-card-header">
+            <div class="class-card-icon" style="background: var(--gradient-info);">
+                <i data-lucide="book-open"></i>
+            </div>
+            <div>
+                <div class="class-card-title">KELAS: {{ $k->nama_kelas }}</div>
+                <div class="class-card-subtitle">Riwayat izin mahasiswa</div>
+            </div>
+        </div>
+        <div class="class-card-body">
+            <a href="{{ route('dosen.absensi.create', $k->id_kelas) }}" class="btn btn-primary" style="width:100%;">
+                <i data-lucide="calendar-check"></i> Riwayat Izin
             </a>
         </div>
     </div>

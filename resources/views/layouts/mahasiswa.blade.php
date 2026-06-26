@@ -1279,7 +1279,7 @@
                 <i data-lucide="user"></i>
                 <span>Profil</span>
             </a>
-            <a href="{{ route('mahasiswa.notifikasi.index') }}" class="{{ request()->routeIs('mahasiswa.notifikasi*') ? 'active' : '' }}" data-tooltip="Notifikasi">
+            {{-- <a href="{{ route('mahasiswa.notifikasi.index') }}" class="{{ request()->routeIs('mahasiswa.notifikasi*') ? 'active' : '' }}" data-tooltip="Notifikasi">
                 <i data-lucide="bell"></i>
                 <span>Notifikasi</span>
                 @if(Auth::guard('mahasiswa')->user()->notifikasi()->where('status_baca', 'belum')->count() > 0)
@@ -1287,7 +1287,8 @@
                         {{ Auth::guard('mahasiswa')->user()->notifikasi()->where('status_baca', 'belum')->count() }}
                     </span>
                 @endif
-            </a>
+            </a> --}}
+            
         </div>
 
         <div class="sidebar-footer">

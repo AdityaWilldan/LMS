@@ -11,15 +11,26 @@ use App\Models\Mahasiswa;
 
 class TugasMahasiswaController extends Controller
 {
+    // Halaman index: card per mata kuliah
     public function index()
     {
         /** @var Mahasiswa $mahasiswa */
         $mahasiswa = Auth::guard('mahasiswa')->user();
-        $kelasIds = $mahasiswa->kelas->pluck('id_kelas');
-        $tugas = Tugas::whereIn('id_kelas', $kelasIds)->with('kelas')->get();
-        return view('mahasiswa.tugas.index', compact('tugas'));
+        $kelas = $mahasiswa->kelas()->with('mataKuliah')->withCount('tugas')->get();
+        return view('mahasiswa.tugas.index', compact('kelas'));
     }
 
+    // Halaman detail tugas per kelas (tambahkan int pada parameter)
+    public function tugasByKelas(int $id_kelas)
+    {
+        /** @var Mahasiswa $mahasiswa */
+        $mahasiswa = Auth::guard('mahasiswa')->user();
+        $kelas = $mahasiswa->kelas()->with('mataKuliah')->findOrFail($id_kelas);
+        $tugas = Tugas::where('id_kelas', $id_kelas)->get();
+        return view('mahasiswa.tugas.bykelas', compact('kelas', 'tugas'));
+    }
+
+    // Halaman detail satu tugas
     public function show(int $id_tugas)
     {
         $tugas = Tugas::findOrFail($id_tugas);
@@ -31,6 +42,7 @@ class TugasMahasiswaController extends Controller
         return view('mahasiswa.tugas.show', compact('tugas', 'upload'));
     }
 
+    // Upload tugas
     public function upload(Request $request, int $id_tugas)
     {
         $tugas = Tugas::findOrFail($id_tugas);
@@ -70,6 +82,7 @@ class TugasMahasiswaController extends Controller
         return redirect()->route('mahasiswa.tugas.show', $id_tugas)->with('success', $message);
     }
 
+    // Hapus upload
     public function deleteUpload(int $id_tugas)
     {
         $tugas = Tugas::findOrFail($id_tugas);

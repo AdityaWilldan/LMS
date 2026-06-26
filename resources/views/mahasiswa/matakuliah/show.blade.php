@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<div class="card mb-4">
+{{-- <div class="card mb-4">
     <div class="card-header">
         <i data-lucide="clipboard-list"></i>
         <span>Daftar Tugas</span>
@@ -92,7 +92,7 @@
             </tbody>
         </table>
     </div>
-</div>
+</div> --}}
 
 <div class="card">
     <div class="card-header">
