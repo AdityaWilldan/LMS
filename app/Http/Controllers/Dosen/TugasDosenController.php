@@ -1,93 +1,28 @@
-<?php
+<?php 
+// app/Http/Controllers/Dosen/TugasDosenController.php (CONTOH MODIFIKASI)
 namespace App\Http\Controllers\Dosen;
-
 use App\Http\Controllers\Controller;
-use App\Models\Tugas;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class TugasDosenController extends Controller
 {
+    // HAPUS semua query database di sini.
+    // Biarkan kosong atau hanya return view.
     public function index()
     {
-        $dosen = Auth::guard('dosen')->user();
-        $kelasIds = $dosen->mataKuliah->flatMap->kelas->pluck('id_kelas');
-        $tugas = Tugas::whereIn('id_kelas', $kelasIds)->with('kelas')->get();
-        return view('dosen.tugas.index', compact('tugas'));
+        return view('dosen.tugas.index');
     }
 
     public function create()
     {
-        $dosen = Auth::guard('dosen')->user();
-        $kelas = $dosen->mataKuliah->flatMap->kelas;
-        return view('dosen.tugas.create', compact('kelas'));
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'judul_tugas' => 'required|string|max:100',
-            'deskripsi'   => 'nullable|string',
-            'deadline'    => 'required|date|after:now',
-            'id_kelas'    => 'required|exists:kelas,id_kelas',
-            'file_materi' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:10240', // 10MB
-        ]);
-
-        $data = $request->only(['judul_tugas', 'deskripsi', 'deadline', 'id_kelas']);
-
-        // Upload file materi
-        if ($request->hasFile('file_materi')) {
-            $path = $request->file('file_materi')->store('public/tugas');
-            $data['file_materi'] = $path;
-        }
-
-        Tugas::create($data);
-        return redirect()->route('dosen.tugas.index')->with('success', 'Tugas berhasil ditambahkan');
+        return view('dosen.tugas.create');
     }
 
     public function edit($id)
     {
-        $tugas = Tugas::findOrFail($id);
-        $dosen = Auth::guard('dosen')->user();
-        $kelas = $dosen->mataKuliah->flatMap->kelas;
-        return view('dosen.tugas.edit', compact('tugas', 'kelas'));
+        // Kirim ID agar bisa dipakai di JS Blade jika perlu
+        return view('dosen.tugas.edit', ['id_tugas' => $id]); 
     }
 
-    public function update(Request $request, $id)
-    {
-        $tugas = Tugas::findOrFail($id);
-
-        $request->validate([
-            'judul_tugas' => 'required|string|max:100',
-            'deskripsi'   => 'nullable|string',
-            'deadline'    => 'required|date',
-            'id_kelas'    => 'required|exists:kelas,id_kelas',
-            'file_materi' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:10240',
-        ]);
-
-        $data = $request->only(['judul_tugas', 'deskripsi', 'deadline', 'id_kelas']);
-
-        // Upload file baru jika ada
-        if ($request->hasFile('file_materi')) {
-            // Hapus file lama
-            if ($tugas->file_materi) {
-                Storage::delete($tugas->file_materi);
-            }
-            $path = $request->file('file_materi')->store('public/tugas');
-            $data['file_materi'] = $path;
-        }
-
-        $tugas->update($data);
-        return redirect()->route('dosen.tugas.index')->with('success', 'Tugas berhasil diubah');
-    }
-
-    public function destroy($id)
-    {
-        $tugas = Tugas::findOrFail($id);
-        // Hapus file fisik (di booted model sudah otomatis)
-        $tugas->delete();
-        return redirect()->route('dosen.tugas.index')->with('success', 'Tugas dihapus');
-    }
+    // Method store, update, destroy HAPUS saja dari sini, 
+    // karena sudah dihandle penuh oleh API Controller.
 }

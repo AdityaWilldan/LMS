@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login - LMS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -95,7 +96,6 @@
             }
         }
 
-        /* Additional ambient glow */
         .ambient-glow {
             position: absolute;
             top: 50%;
@@ -120,7 +120,6 @@
             }
         }
 
-        /* Main Container - Horizontal Layout */
         .main-container {
             width: 100%;
             max-width: 900px;
@@ -138,7 +137,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Left Side - Logo Section */
         .logo-section {
             flex: 1;
             padding: 60px 40px;
@@ -200,7 +198,6 @@
             text-shadow: 0 0 20px rgba(255,255,255,0.5);
         }
 
-        /* Right Side - Form Section */
         .form-section {
             flex: 1;
             padding: 60px 50px;
@@ -267,6 +264,10 @@
             border-color: rgba(255, 255, 255, 0.3);
         }
 
+        .form-input.error {
+            border-color: rgba(239, 68, 68, 0.6);
+        }
+
         .btn-login {
             width: 100%;
             padding: 14px 24px;
@@ -282,16 +283,45 @@
             margin-top: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            position: relative;
         }
 
-        .btn-login:hover {
+        .btn-login:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.9);
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
         }
 
-        .btn-login:active {
+        .btn-login:active:not(:disabled) {
             transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-login .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        .btn-login.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .alert {
@@ -302,16 +332,19 @@
             color: #fca5a5;
             font-size: 13px;
             margin-bottom: 24px;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 8px;
+        }
+
+        .alert.show {
+            display: flex;
         }
 
         .alert i {
             font-size: 16px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .login-wrapper {
                 flex-direction: column;
@@ -358,7 +391,6 @@
             }
         }
 
-        /* Animation */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -393,7 +425,6 @@
             <div class="logo-section">
                 <div class="logo-wrapper">
                     <div class="logo-glow"></div>
-                    <!-- Ganti src dengan path logo universitas Anda -->
                     <img src="" alt="Universitas Mandiri" class="logo-img">
                 </div>
                 <div class="logo-text">LMS</div>
@@ -406,16 +437,12 @@
                     <p class="form-subtitle">Masukkan kredensial Anda untuk melanjutkan</p>
                 </div>
 
-                @if(session('errors'))
-                    <div class="alert">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <span>{{ session('errors')->first('username') }}</span>
-                    </div>
-                @endif
+                <div class="alert" id="errorAlert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="errorMessage">Username atau password salah</span>
+                </div>
 
-                <form method="POST" action="{{ route('login') }}">
-                    @csrf
-                    
+                <form id="loginForm">
                     <div class="form-group">
                         <label for="username" class="form-label">NPM / NIM</label>
                         <input 
@@ -441,12 +468,86 @@
                         >
                     </div>
 
-                    <button type="submit" class="btn-login">
-                        Login
+                    <button type="submit" class="btn-login" id="btnLogin">
+                        <span class="btn-text">Login</span>
+                        <div class="spinner"></div>
                     </button>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const btnLogin = document.getElementById('btnLogin');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide error
+            errorAlert.classList.remove('show');
+            
+            // Show loading
+            btnLogin.classList.add('loading');
+            btnLogin.disabled = true;
+
+            const formData = new FormData(loginForm);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(data),
+                    credentials: 'same-origin'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // ✅ REDIRECT KE DASHBOARD BERDASARKAN RESPONSE API
+                    if (result.redirect) {
+                        // Gunakan field redirect dari API response
+                        window.location.href = result.redirect;
+                    } else if (result.guard === 'dosen') {
+                        // Fallback jika field redirect tidak ada
+                        window.location.href = '/dosen/dashboard';
+                    } else if (result.guard === 'mahasiswa') {
+                        // Fallback jika field redirect tidak ada
+                        window.location.href = '/mahasiswa/dashboard';
+                    } else {
+                        // Fallback terakhir
+                        window.location.href = '/login';
+                    }
+                } else {
+                    // Login gagal
+                    errorMessage.textContent = result.message || 'Username atau password salah';
+                    errorAlert.classList.add('show');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+                errorAlert.classList.add('show');
+            } finally {
+                // Hide loading
+                btnLogin.classList.remove('loading');
+                btnLogin.disabled = false;
+            }
+        });
+
+        // Remove error class on input
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', () => {
+                input.classList.remove('error');
+                errorAlert.classList.remove('show');
+            });
+        });
+    </script>
 </body>
 </html>

@@ -32,32 +32,26 @@ Route::prefix('dosen')->name('dosen.')->middleware('auth:dosen')->group(function
     Route::resource('tugas', App\Http\Controllers\Dosen\TugasDosenController::class)->except(['show']);
 
     Route::get('nilai', [App\Http\Controllers\Dosen\NilaiDosenController::class, 'index'])->name('nilai.index');
-    Route::get('nilai/{id_upload}/create', [App\Http\Controllers\Dosen\NilaiDosenController::class, 'create'])->name('nilai.create');
-    Route::post('nilai/{id_upload}/store', [App\Http\Controllers\Dosen\NilaiDosenController::class, 'store'])->name('nilai.store');
 
     Route::get('mahasiswa', [App\Http\Controllers\Dosen\MahasiswaDosenController::class, 'index'])->name('mahasiswa.index');
     Route::get('mahasiswa/{id_kelas}', [App\Http\Controllers\Dosen\MahasiswaDosenController::class, 'show'])->name('mahasiswa.show');
 
-    // ===== ROUTE ABSENSI DOSEN =====
     Route::prefix('absensi')->name('absensi.')->group(function () {
         // Indeks absensi
         Route::get('/', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'index'])->name('index');
 
-        // ===== MANAJEMEN SESI (diletakkan di ATAS route dengan parameter) =====
         Route::get('sesi', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiIndex'])->name('sesi.index');
         Route::get('sesi/create', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiCreate'])->name('sesi.create');
         Route::post('sesi', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiStore'])->name('sesi.store');
-        Route::patch('sesi/{id_sesi}/toggle', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiToggle'])->name('sesi.toggle');
+        
+        Route::post('mode/toggle', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'toggleMode'])->name('mode.toggle');
 
-        // ===== REKAP ABSENSI =====
-        Route::get('{id_kelas}/rekap/{tanggal?}', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'rekap'])->name('rekap');
-
-        // ===== TOGGLE MODE ABSENSI (baru) =====
-        Route::get('mode/toggle', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'toggleMode'])->name('mode.toggle');
-
-        // ===== ABSENSI MANUAL OLEH DOSEN =====
-        Route::get('{id_kelas}/create', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'create'])->name('create');
-        Route::post('{id_kelas}/store', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'store'])->name('store');
+        Route::get('rekap/{id_kelas}/{tanggal?}', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'rekap'])->name('rekap');
+        Route::get('create/{id_kelas}', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'create'])->name('create');
+        Route::post('store/{id_kelas}', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'store'])->name('store');
+        
+        // Toggle sesi - dengan parameter
+        Route::post('sesi/{id_sesi}/toggle', [App\Http\Controllers\Dosen\AbsensiDosenController::class, 'sesiToggle'])->name('sesi.toggle');
     });
 });
 
@@ -91,4 +85,9 @@ Route::prefix('mahasiswa')->name('mahasiswa.')->middleware('auth:mahasiswa')->gr
     // ===== ROUTE ABSENSI MAHASISWA =====
     Route::get('absensi', [App\Http\Controllers\Mahasiswa\AbsensiMahasiswaController::class, 'index'])->name('absensi.index');
     Route::post('absensi/absen/{id_kelas}', [App\Http\Controllers\Mahasiswa\AbsensiMahasiswaController::class, 'absen'])->name('absensi.absen');
+
+    // ===== ROUTE GAMIFIKASI (BARU) =====
+    Route::get('gamifikasi', function () {
+        return view('mahasiswa.gamifikasi.index');
+    })->name('gamifikasi.index');
 });
